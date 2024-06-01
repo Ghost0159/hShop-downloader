@@ -1,34 +1,42 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-import json
 from tqdm import tqdm
 import os
-import html.parser
 import urllib.parse
-
-dictionary = {}
 
 baseurl = "https://hshop.erista.me"
 
-def get_games(url):
-    # Retrieve the list of main categories
-    categories = ["/c/games", "/c/updates", "/c/dlc", "/c/virtual-console", "/c/dsiware", "/c/videos", "/c/extras", "/c/themes"]
+def get_main_categories():
+    home = requests.get(baseurl)
+    soup = BeautifulSoup(home.content, "html.parser")
+    categories = soup.find_all("a", href=re.compile(r'^/c/'))
+    return categories
 
-    # Display a menu to select a main category
-    print("Select a main category:")
+def get_games():
+    # Retrieve main categories
+    categories = get_main_categories()
+
+    # Display main categories to select
+    print("Select main categories (comma separated, e.g., 1,2,3):")
     for i, category in enumerate(categories, start=1):
-        print(f"{i}. {category.replace('/c/', '').replace('/', ' ').capitalize()}")
-    selection = input("Enter your selection: ")
+        print(f"{i}. {category.text.strip()}")
+    selections = input("Enter your selections: ")
 
-    # Check that the selection is valid
-    if not selection.isdigit() or int(selection) not in range(1, len(categories) + 1):
-        print("Invalid selection, please try again.")
-        return
+    # Check that the selections are valid
+    selected_categories = []
+    for selection in selections.split(','):
+        selection = selection.strip()
+        if not selection.isdigit() or int(selection) not in range(1, len(categories) + 1):
+            print(f"Invalid selection '{selection}', please try again. Example: 1,2,3")
+            return
+        selected_categories.append(categories[int(selection) - 1])
 
-    # Select the corresponding main category
-    selected_category = categories[int(selection) - 1]
-    category_url = baseurl + selected_category
+    for selected_category in selected_categories:
+        category_url = baseurl + selected_category['href']
+        download_games_in_category(category_url)
+
+def download_games_in_category(category_url):
     home = requests.get(category_url)
     soupRegion = BeautifulSoup(home.content.decode('utf-8'), "html.parser")
     region = soupRegion.find("div", class_="list pre-top")
@@ -42,41 +50,48 @@ def get_games(url):
         if "/s/" in i:
             sub_categories[j] = i
 
-    # Display a menu to select a subcategory
+    # Display a menu to select subcategories
     if sub_categories:
-        print(f"Select a subcategory for {selected_category.replace('/c/', '')}:")
+        print(f"Select subcategories for {category_url.replace(baseurl + '/c/', '')} (comma separated, e.g., 1,2,3):")
         sub_category_list = list(sub_categories.items())
         for i, (name, url) in enumerate(sub_category_list, start=1):
             print(f"{i}. {name}")
-        selection = input("Enter your selection: ")
+        selections = input("Enter your selections: ")
 
-        if not selection.isdigit() or int(selection) not in range(1, len(sub_category_list) + 1):
-            print("Invalid selection, please try again.")
-            return
-
-        selected_sub_category = sub_category_list[int(selection) - 1][1]
-        url = baseurl + selected_sub_category + "?count=100&offset=0"
+        selected_sub_categories = []
+        for selection in selections.split(','):
+            selection = selection.strip()
+            if not selection.isdigit() or int(selection) not in range(1, len(sub_category_list) + 1):
+                print(f"Invalid selection '{selection}', please try again. Example: 1,2,3")
+                return
+            selected_sub_category_name, selected_sub_category = sub_category_list[int(selection) - 1]
+            selected_sub_categories.append((selected_sub_category_name, selected_sub_category))
     else:
-        url = baseurl + f"{selected_category}?count=100&offset=0"
+        selected_sub_categories = [(category_url.replace(baseurl + '/c/', ''), category_url)]
 
-    offset = 0
-    while True:
-        game_region = requests.get(url)
-        soupOffset = BeautifulSoup(game_region.text, "html.parser")
-        content = soupOffset.find("div", class_="list pre-top")
-        game_list = re.findall(r'href="([^"]+)', str(content))
-        download(game_list)
-        next_page = soupOffset.find("a", {"class": "next"})
-        if next_page is None or offset >= int(next_page.text):
-            break
-        url = baseurl + next_page["href"]
-        offset += 100
+    for selected_sub_category_name, selected_sub_category in selected_sub_categories:
+        url = baseurl + selected_sub_category + "?count=100&offset=0"
+        download_path = f"./downloads/{category_url.replace(baseurl + '/c/', '')}/{selected_sub_category_name}"
+        os.makedirs(download_path, exist_ok=True)
 
-def download(urls):
+        offset = 0
+        while True:
+            game_region = requests.get(url)
+            soupOffset = BeautifulSoup(game_region.text, "html.parser")
+            content = soupOffset.find("div", class_="list pre-top")
+            game_list = re.findall(r'href="([^"]+)', str(content))
+            download(game_list, download_path)
+            next_page = soupOffset.find("a", {"class": "next"})
+            if next_page is None or offset >= int(next_page.text):
+                break
+            url = baseurl + next_page["href"]
+            offset += 100
+
+def download(urls, download_path):
     for url in urls:
-        download_game(baseurl + url)
+        download_game(baseurl + url, download_path)
 
-def download_game(url):
+def download_game(url, download_path):
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
@@ -93,25 +108,27 @@ def download_game(url):
             if filename.startswith("'"):
                 filename = filename[1:]
             filename = html_decode(filename)  # Call the HTML decoding function
-            last_delimiter_index = filename.rfind(".")
-            parts = [filename[:last_delimiter_index], filename[last_delimiter_index + 1:]]
-            tempfilename = parts[0] + '~temp.' + parts[-1]
-            if not os.path.exists("[" + parts[0].split('/')[-1] + "]"):
-                os.makedirs("[" + parts[0].split('/')[-1] + "]")
-            with open("[" + parts[0].split('/')[-1] + "]/" + tempfilename, 'wb') as f:
-                total_length = response.headers.get('content-length')
-                if total_length is None:
-                    f.write(response.content)
-                else:
-                    dl = 0
-                    total_length = int(total_length)
-                    for data in tqdm(response.iter_content(chunk_size=4096), total=total_length, unit='B',
-                                     unit_scale=True):
-                        dl += len(data)
-                        f.write(data)
-                        done = int(50 * dl / total_length)
-                        print("\r[%s%s]" % ('=' * done, ' ' * (50 - done)), end='')
-            os.rename("[" + parts[0].split('/')[-1] + "]/" + tempfilename, "[" + parts[0].split('/')[-1] + "]/" + filename)
+            
+            # Construct the temporary filename with .part extension
+            extension = filename.split('.')[-1]
+            tempfilename = filename.replace(f'.{extension}', f'.{extension}.part')
+            
+            full_temp_path = os.path.join(download_path, tempfilename)
+            full_final_path = os.path.join(download_path, filename)
+            
+            total_length = int(response.headers.get('content-length', 0))
+            with open(full_temp_path, 'wb') as f, tqdm(
+                total=total_length,
+                unit='B',
+                unit_scale=True,
+                unit_divisor=1024,
+                desc=f"{filename} ({total_length/1024/1024:.2f} MB)"
+            ) as bar:
+                for data in response.iter_content(chunk_size=4096):
+                    f.write(data)
+                    bar.update(len(data))
+
+            os.rename(full_temp_path, full_final_path)
         else:
             print("No download link found for game at URL:", url)
     except requests.exceptions.RequestException as e:
@@ -131,4 +148,4 @@ def html_decode(filename):
     return filename
 
 if __name__ == "__main__":
-    get_games(baseurl + "/c/games")
+    get_games()
