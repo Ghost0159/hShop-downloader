@@ -70,21 +70,25 @@ def download_games_in_category(category_url):
         selected_sub_categories = [(category_url.replace(baseurl + '/c/', ''), category_url)]
 
     for selected_sub_category_name, selected_sub_category in selected_sub_categories:
-        url = baseurl + selected_sub_category + "?count=100&offset=0"
         download_path = f"./downloads/{category_url.replace(baseurl + '/c/', '')}/{selected_sub_category_name}"
         os.makedirs(download_path, exist_ok=True)
 
         offset = 0
         while True:
+            url = baseurl + selected_sub_category + f"?count=100&offset={offset}"
             game_region = requests.get(url)
             soupOffset = BeautifulSoup(game_region.text, "html.parser")
             content = soupOffset.find("div", class_="list pre-top")
             game_list = re.findall(r'href="([^"]+)', str(content))
-            download(game_list, download_path)
-            next_page = soupOffset.find("a", {"class": "next"})
-            if next_page is None or offset >= int(next_page.text):
+
+            if not game_list:
                 break
-            url = baseurl + next_page["href"]
+
+            download(game_list, download_path)
+
+            if len(game_list) < 100:
+                break
+
             offset += 100
 
 def download(urls, download_path):
@@ -129,8 +133,6 @@ def download_game(url, download_path):
                     bar.update(len(data))
 
             os.rename(full_temp_path, full_final_path)
-        else:
-            print("No download link found for game at URL:", url)
     except requests.exceptions.RequestException as e:
         print("An error occurred while downloading the game:", e)
     except Exception as e:
