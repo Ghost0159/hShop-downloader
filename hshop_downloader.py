@@ -18,19 +18,23 @@ def get_games():
     categories = get_main_categories()
 
     # Display main categories to select
-    print("Select main categories (comma separated, e.g., 1,2,3):")
+    print("Select main categories (comma separated, '*' for all):")
     for i, category in enumerate(categories, start=1):
         print(f"{i}. {category.text.strip()}")
     selections = input("Enter your selections: ")
 
-    # Check that the selections are valid
-    selected_categories = []
-    for selection in selections.split(','):
-        selection = selection.strip()
-        if not selection.isdigit() or int(selection) not in range(1, len(categories) + 1):
-            print(f"Invalid selection '{selection}', please try again. Example: 1,2,3")
-            return
-        selected_categories.append(categories[int(selection) - 1])
+    # Check if user wants to select all categories
+    if selections.strip() == '*':
+        selected_categories = categories
+    else:
+        # Check that the selections are valid
+        selected_categories = []
+        for selection in selections.split(','):
+            selection = selection.strip()
+            if not selection.isdigit() or int(selection) not in range(1, len(categories) + 1):
+                print(f"Invalid selection '{selection}', please try again. Example: 1,2,3")
+                return
+            selected_categories.append(categories[int(selection) - 1])
 
     for selected_category in selected_categories:
         category_url = baseurl + selected_category['href']
@@ -51,13 +55,16 @@ def download_games_in_category(category_url):
             sub_categories[j] = i
 
     # Display a menu to select subcategories
-    if sub_categories:
-        print(f"Select subcategories for {category_url.replace(baseurl + '/c/', '')} (comma separated, e.g., 1,2,3):")
-        sub_category_list = list(sub_categories.items())
-        for i, (name, url) in enumerate(sub_category_list, start=1):
-            print(f"{i}. {name}")
-        selections = input("Enter your selections: ")
+    print(f"Select subcategories for {category_url.replace(baseurl + '/c/', '')} (comma separated, '*' for all):")
+    sub_category_list = list(sub_categories.items())
+    for i, (name, url) in enumerate(sub_category_list, start=1):
+        print(f"{i}. {name}")
+    selections = input("Enter your selections: ")
 
+    # Check if user wants to select all subcategories
+    if selections.strip() == '*':
+        selected_sub_categories = sub_category_list
+    else:
         selected_sub_categories = []
         for selection in selections.split(','):
             selection = selection.strip()
@@ -66,8 +73,6 @@ def download_games_in_category(category_url):
                 return
             selected_sub_category_name, selected_sub_category = sub_category_list[int(selection) - 1]
             selected_sub_categories.append((selected_sub_category_name, selected_sub_category))
-    else:
-        selected_sub_categories = [(category_url.replace(baseurl + '/c/', ''), category_url)]
 
     for selected_sub_category_name, selected_sub_category in selected_sub_categories:
         download_path = f"./downloads/{category_url.replace(baseurl + '/c/', '')}/{selected_sub_category_name}"
