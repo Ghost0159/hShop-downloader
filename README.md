@@ -1,7 +1,7 @@
 # hShop Downloader
 
 ## Overview
-https://github.com/Ghost0159/hShop-downloader/assets/66320002/5cda8cdd-83dc-4430-b449-25d5b77d8a27
+https://github.com/Ghost0159/hShop-downloader/assets/66320002/1f61a252-d788-4f8d-8aaf-d89166e244e8
 
 The **hShop Downloader** is a Python script designed to facilitate the downloading of games from the hShop website. It focuses on various categories such as games, updates, DLC, virtual console, DSiWare, videos, extras, and themes. The script employs web scraping techniques to gather information and provides a straightforward interface for downloading content directly to your local machine.
 
