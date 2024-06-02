@@ -121,6 +121,12 @@ def download_game(url, download_path):
             full_final_path = os.path.join(download_path, filename)
             
             total_length = int(response.headers.get('content-length', 0))
+            
+            # Check if the file already exists and its size
+            if os.path.exists(full_final_path) and os.path.getsize(full_final_path) == total_length:
+                print(f"{filename} already downloaded and matches the expected size.")
+                return
+            
             with open(full_temp_path, 'wb') as f, tqdm(
                 total=total_length,
                 unit='B',
