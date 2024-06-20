@@ -108,8 +108,13 @@ def download_game(url, download_path):
         game = requests.get(url, headers=headers)
         urls = re.findall(r'<a\s+class="btn btn-c3"\s+href="([^"]*)">Direct Download<\/a>', str(game.text))
         if len(urls) > 0:
-            url = urls[0]
-            response = requests.get(url, stream=True)
+            download_url = urls[0]
+            response = requests.get(download_url, stream=True)
+            
+            # Extract the ID from the game URL
+            game_id = url.split('/')[-1]
+            
+            # Parse the filename from the content-disposition header
             filename = urllib.parse.unquote(response.headers.get('content-disposition').split('"')[-1])
             filename = re.sub(r'[<>:\"/\\\|\?\*]', '', filename)  # Remove invalid characters
             filename = filename.replace('%20', ' ')
@@ -117,6 +122,10 @@ def download_game(url, download_path):
             if filename.startswith("'"):
                 filename = filename[1:]
             filename = html_decode(filename)  # Call the HTML decoding function
+            
+            # Append the game ID to the filename in the specified format
+            filename_parts = filename.rsplit('.', 1)
+            filename = f"{filename_parts[0]}_[hID-{game_id}].{filename_parts[1]}"
             
             # Construct the temporary filename with .part extension
             extension = filename.split('.')[-1]
