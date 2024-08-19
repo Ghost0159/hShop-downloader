@@ -3,7 +3,7 @@
 ## Overview
 https://github.com/Ghost0159/hShop-downloader/assets/66320002/1f61a252-d788-4f8d-8aaf-d89166e244e8
 
-The **hShop Downloader** is a Python script designed to facilitate the downloading of games from the hShop website. It focuses on various categories such as games, updates, DLC, virtual console, DSiWare, videos, extras, and themes. The script employs web scraping techniques to gather information and provides a straightforward interface for downloading content directly to your local machine.
+The **hShop Downloader** is a Python script designed to facilitate the downloading of games and related content from the hShop website. It supports various categories such as games, updates, DLC, virtual console, DSiWare, videos, extras, and themes. The script leverages web scraping techniques to gather information and provides a streamlined interface for downloading content directly to your local machine.
 
 ## Features
 
@@ -22,16 +22,19 @@ The **hShop Downloader** is a Python script designed to facilitate the downloadi
 
 1. **Web Scraping:** The script utilizes the `requests` library along with `BeautifulSoup` for web scraping. It extracts relevant information, such as download links and file names, from the hShop website.
 
-2. **Threaded Downloads:** To enhance performance, the script uses multiple threads to download games concurrently. This allows for faster retrieval of content.
+2. **Selenium for Dynamic Content:** For web pages that load content dynamically using JavaScript, the script utilizes Selenium to interact with the webpage and retrieve the necessary data.
 
-3. **HTML Decoding:** The `html_decode` function handles HTML-encoded characters in filenames, ensuring accurate and readable file names.
+3. **Threaded Downloads:** To enhance performance, the script uses multiple threads to download games concurrently. This allows for faster retrieval of content.
 
-4. **Download Progress:** The script displays a progress bar using `tqdm` to provide real-time feedback on the download process.
+4. **HTML Decoding:** The `html_decode` function handles HTML-encoded characters in filenames, ensuring accurate and readable file names.
 
-5. **Organized Directories:** The downloaded content is organized into directories based on their respective categories. Each item is stored in a dedicated folder for ease of access.
+5. **Download Progress:** The script displays a progress bar using `tqdm` to provide real-time feedback on the download process.
+
+6. **Organized Directories:** The downloaded content is organized into directories based on their respective categories. Each item is stored in a dedicated folder for ease of access.
 
 #### Technical Details
 - **Web Scraping:** The script sends HTTP requests to the hShop website and parses the HTML response using BeautifulSoup. It then extracts relevant information such as download links and file names using regular expressions.
+- **Selenium Integration:** For web pages with content that loads dynamically via JavaScript, the script uses Selenium, a powerful browser automation tool, to navigate the site, interact with elements, and extract data. Selenium simulates a real user interacting with the browser, making it ideal for scraping content that isn’t immediately available in the initial HTML response.
 - **Threaded Downloads:** The script utilizes Python's ``threading`` module to create multiple threads for downloading games concurrently. This helps in maximizing bandwidth utilization and reducing download times, especially when downloading multiple files.
 - **HTML Decoding:** The ``html_decode`` function handles HTML-encoded characters in filenames by replacing percent-encoded characters with their corresponding ASCII characters. This ensures that filenames are correctly decoded and readable.
 - **Download Progress:** The script uses ``tqdm``, a Python library for creating progress bars, to display real-time download progress. This gives users visibility into the download process and estimated time remaining.
@@ -45,24 +48,34 @@ Ensure you have the following dependencies installed:
 - `requests`
 - `BeautifulSoup`
 - `tqdm`
+- `Selenium`
+- A WebDriver for your browser (e.g., `chromedriver` for Chrome)
 
 Install the required Python packages using:
 
 ```bash
-pip install requests beautifulsoup4 tqdm
+pip install -r requirements.txt
 ```
 
 ## Usage
-1. Clone this repository:
+1. **Clone this repository:**
 ```bash
-git clone --recursive https://github.com/Ghost0159/hShop-downloader/
+git clone https://github.com/Ghost0159/hShop-downloader/
 ```
-2. Open the `hshop_downloader.py` file.
-3. Update the URL in the `get_games` function with the desired category URL (e.g., for DLC, use `baseurl+"/c/dlc"`).
-4. Run the script:
+2. **Navigate to the project directory:**
+```bash
+cd hShop-downloader
+```
+3. **Run the Script:**
+Execute the script with the following command:
 ```bash
 python hshop_downloader.py
 ```
+4. **Follow the On-Screen Instructions:**
+    - After running the script, you will be prompted to select the main categories from which you want to download games. Enter the numbers corresponding to your desired categories, separated by commas, or type `*` to select all.
+    - Next, you will choose the subcategories of the games you want to download using a similar selection process.
+    - The files will be downloaded and organized into directories based on the categories you selected.
+    
 
 ## Additional Functionality
 The script can be extended and enhanced in several ways:
