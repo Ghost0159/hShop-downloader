@@ -28,6 +28,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run hShop_downloader.py
+    - name: Run hshop_downloader.py
       run: |
-        python hShop_downloader.py
+        python hshop_downloader.py
