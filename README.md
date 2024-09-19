@@ -102,6 +102,7 @@ The script can be extended and enhanced in several ways:
 ## Credits
 This script was developed by [Ghost0159](https://github.com/Ghost0159/).
 Special thanks to [Léon Le Breton](https://github.com/LeonLeBreton).
+kloklojul for the download limiter
 
 ## License
 This project is licensed under the GNU General Public License Version 3.0. See the [LICENSE](LICENSE) file for details.
