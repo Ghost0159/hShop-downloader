@@ -32,6 +32,14 @@ The **hShop Downloader** is a Python script designed to facilitate the downloadi
 
 6. **Organized Directories:** The downloaded content is organized into directories based on their respective categories. Each item is stored in a dedicated folder for ease of access.
 
+7. **Limiting Download Speed:** The download speed can be limited so you can have it running in the background without it consuming all your network bandwith allowing you to do other activities such as gaming or video streaming.
+The limit can be set during the script call:
+```
+python hshop_downloader.py --speed-limit 1048576  # Sets speed limit to 1 MB/s
+```
+The speed-limit argument can be omitted to use the full speed of your connection.
+
+
 #### Technical Details
 - **Web Scraping:** The script sends HTTP requests to the hShop website and parses the HTML response using BeautifulSoup. It then extracts relevant information such as download links and file names using regular expressions.
 - **Selenium Integration:** For web pages with content that loads dynamically via JavaScript, the script uses Selenium, a powerful browser automation tool, to navigate the site, interact with elements, and extract data. Selenium simulates a real user interacting with the browser, making it ideal for scraping content that isn’t immediately available in the initial HTML response.

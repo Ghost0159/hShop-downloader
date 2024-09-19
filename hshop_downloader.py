@@ -11,11 +11,18 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
+from time import sleep
 import contextlib
 import sys
+import argparse
 
 # Suppress TensorFlow and other libraries' verbose logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+parser = argparse.ArgumentParser(description='Download games with optional speed limit.')
+parser.add_argument('--speed-limit', type=float, default=None, help='Download speed limit in bytes per second')
+args = parser.parse_args()
+
+speed_limit_glob = args.speed_limit
 
 @contextlib.contextmanager
 def suppress_stdout_stderr():
@@ -193,7 +200,8 @@ def download_games_in_category(driver, category_url):
                 if direct_download_element and direct_download_element['href']:
                     download_url = direct_download_element['href']
                     # Do not print the URL, just download
-                    download_game(driver, download_url, download_path)
+                    download_game(driver, download_url, download_path, speed_limit=speed_limit_glob)
+                    #download_game(driver, download_url, download_path, speed_limit=None)
                 else:
                     logging.warning(f"Direct download link not found for a game.")
 
@@ -202,7 +210,7 @@ def download_games_in_category(driver, category_url):
 
             offset += 100
 
-def download_game(driver, url, download_path):
+def download_game(driver, url, download_path, speed_limit=None):
     """
     Download a single game and save it to disk.
 
@@ -215,6 +223,9 @@ def download_game(driver, url, download_path):
         response = requests.get(url, stream=True)
         
         if response.status_code == 200:
+
+            
+
             content_disposition = response.headers.get('content-disposition')
             if content_disposition:
                 filename = re.findall("filename=\"(.+)\"", content_disposition)[0]
@@ -237,7 +248,9 @@ def download_game(driver, url, download_path):
             if os.path.exists(full_final_path) and os.path.getsize(full_final_path) == total_length:
                 logging.info(f"{filename} already downloaded and matches the expected size.")
                 return
-            
+            chunk_size = 4096
+            if speed_limit:
+                chunk_time = chunk_size / speed_limit
             with open(full_temp_path, 'wb') as f, tqdm(
                 total=total_length,
                 unit='B',
@@ -245,9 +258,15 @@ def download_game(driver, url, download_path):
                 unit_divisor=1024,
                 desc=f"{filename} ({total_length/1024/1024:.2f} MB)"
             ) as bar:
-                for data in response.iter_content(chunk_size=4096):
+                start_time = time.time()
+                for data in response.iter_content(chunk_size=chunk_size):
                     f.write(data)
                     bar.update(len(data))
+                    if speed_limit:
+                        elapsed = time.time() - start_time
+                        if elapsed < chunk_time:
+                            sleep(chunk_time - elapsed)
+                        start_time = time.time()
 
             os.rename(full_temp_path, full_final_path)
         else:
